@@ -52,7 +52,7 @@ class UNetPipeline(object):
             else:
                 img_data, img_info, cdl_data, cdl_mask = job.result(progress_bar=False)
                 batch_x[job_ix[job]] = get_monthly_arrays(img_data, img_info)
-                batch_y[job_ix[job]] = mask_crop_layer(cdl_data, cdl_mask)
+                batch_y[job_ix[job]] = mask_crop_layer(cdl_data, self.model_params['nclasses'])
         return batch_x, batch_y
 
     def train_model(self, batch_size, epochs):
