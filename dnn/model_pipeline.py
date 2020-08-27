@@ -56,9 +56,12 @@ class UNetPipeline(object):
             batch_y[k] = mask_crop_layer(cdl_data, self.model_params['nclasses'])
         return batch_x, batch_y
 
-    def train_model(self, batch_size, epochs):
+    def train_model(self, batch_size, epochs, test_set=False):
+        val_data = None
         for year in self.date_ranges:
-            test_x, test_y = self.data_loader(self.test_ix, year)
+            if test_set:
+                test_x, test_y = self.data_loader(self.test_ix, year)
+                val_data = [test_x, test_y]
             ix_base = np.array(self.train_ix)
             for e in range(epochs):
                 self.random_state.shuffle(ix_base)
@@ -70,7 +73,7 @@ class UNetPipeline(object):
                     print("#" * 32)
                     self.model.fit(x=train_x, y=train_y, batch_size=batch_size,
                                    epochs=1, verbose=1,
-                                   validation_data=[test_x, test_y])
+                                   validation_data=val_data)
 
     def save_model(self, save_fp):
         self.model.save(save_fp)
