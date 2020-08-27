@@ -1,7 +1,8 @@
 import numpy as np
 from descartes import get_masked_daily_product, ndvi, get_cdl, isin, crops_list
 from descartes.process_images import get_monthly_arrays, mask_crop_layer
-from descartes.workflow import as_completed, wf
+from descartes.workflow import wf
+from tqdm import tqdm
 from dnn import u_net_3d
 
 
@@ -42,7 +43,7 @@ class UNetPipeline(object):
         batch_y = np.zeros((batch_size, img_height, img_width, self.model_params['nclasses']))
         tiles_to_run = self.tiles[batch_ix]
         computes = [wf.compute([image_.ndarray, image_.properties, cdl_.ndarray, cdl_iscrop.ndarray],
-                               tile) for tile in tiles_to_run]
+                               tile, progress_bar=False) for tile in tqdm(tiles_to_run)]
         for k, data in enumerate(computes):
             img_data, img_info, cdl_data, cdl_mask = data
             batch_x[k] = get_monthly_arrays(img_data, img_info)
