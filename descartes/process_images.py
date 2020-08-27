@@ -1,4 +1,8 @@
 import numpy as np
+from descartes import crops_list
+
+crops_enc = {id_: k + 1 for k, id_ in enumerate(sorted(crops_list))}
+crops_dec = {crops_enc[id_]: id_ for id_ in crops_enc}
 
 
 def get_monthly_arrays(data: np.ndarray, info: list, time_steps=12) -> np.ndarray:
@@ -18,6 +22,10 @@ def get_monthly_arrays(data: np.ndarray, info: list, time_steps=12) -> np.ndarra
     return avg_array.transpose((0, 2, 3, 1))
 
 
-def mask_crop_layer(cdl_img: np.ndarray, cdl_mask: np.ndarray) -> np.ndarray:
-    cdl_img, cdl_mask = cdl_img[0, 0], np.array(cdl_mask[0, 0], dtype='int')
-    return cdl_img * cdl_mask
+def mask_crop_layer(cdl: np.ndarray, nclasses: int) -> np.ndarray:
+    cdl = np.array(cdl[0, 0])
+    y = np.zeros((cdl.shape[0], cdl.shape[1], nclasses), dtype='int32')
+    y[:, :, 0] = np.asanyarray(~np.isin(cdl[0, 0], list(crops_enc)), dtype='int32')
+    for k in crops_dec:
+        y[:, :, k] = np.asanyarray(cdl == crops_dec[k], dtype='int32')
+    return y
