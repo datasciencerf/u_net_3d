@@ -43,7 +43,7 @@ class UNetPipeline(object):
         batch_y = np.zeros((batch_size, img_height, img_width, self.model_params['nclasses']))
         tiles_to_run = self.tiles[batch_ix]
         computes = [wf.compute([image_.ndarray, image_.properties, cdl_.ndarray, cdl_iscrop.ndarray],
-                               tile, progress_bar=False) for tile in tqdm(tiles_to_run)]
+                               tile, progress_bar=False) for tile in tiles_to_run]
         for k, data in enumerate(computes):
             img_data, img_info, cdl_data, cdl_mask = data
             batch_x[k] = get_monthly_arrays(img_data, img_info)
