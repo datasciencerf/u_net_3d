@@ -45,7 +45,13 @@ class UNetPipeline(object):
         jobs = [wf.compute([image_.ndarray, image_.properties, cdl_.ndarray, cdl_iscrop.ndarray],
                                tile, block=False) for tile in tiles_to_run]
         for k, job in enumerate(jobs):
-            img_data, img_info, cdl_data, cdl_mask = job.execute()
+            job_not_done = True
+            while job_not_done:
+                try:
+                    img_data, img_info, cdl_data, cdl_mask = job.result(progress_bar=False)
+                    job_not_done = False
+                except Exception as e:
+                    print(e)
             batch_x[k] = get_monthly_arrays(img_data, img_info)
             batch_y[k] = mask_crop_layer(cdl_data, self.model_params['nclasses'])
         return batch_x, batch_y
