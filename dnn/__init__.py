@@ -21,7 +21,8 @@ def deconv_block_3d(tensor, residual, nfilters, size=3, padding='same', strides=
     return y
 
 
-def u_net_3d(img_height, img_width, bands, time_steps, nclasses=12, filters=16):
+def u_net_3d(img_height: int, img_width: int, bands: int,
+             time_steps: int, nclasses: int, filters=16) -> Model:
     input_layer = Input(shape=(time_steps, img_height, img_width, bands), name='image_input')
     # First Conv Block
     conv1 = conv_block_3d(input_layer, nfilters=filters)
