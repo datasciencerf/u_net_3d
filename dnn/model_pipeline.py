@@ -41,18 +41,12 @@ class UNetPipeline(object):
         batch_x = np.zeros((batch_size, time_steps, img_height, img_width, bands))
         batch_y = np.zeros((batch_size, img_height, img_width, self.model_params['nclasses']))
         tiles_to_run = self.tiles[batch_ix]
-        jobs = [wf.compute([image_.ndarray, image_.properties, cdl_.ndarray, cdl_iscrop.ndarray],
-                           tile, block=False) for tile in tiles_to_run]
-        job_ix = {j: k for k, j in enumerate(jobs)}
-        failed = []
-        for job in as_completed(jobs):
-            if job.error is not None:
-                failed.append(job)
-                print(job.error)
-            else:
-                img_data, img_info, cdl_data, cdl_mask = job.result(progress_bar=False)
-                batch_x[job_ix[job]] = get_monthly_arrays(img_data, img_info)
-                batch_y[job_ix[job]] = mask_crop_layer(cdl_data, self.model_params['nclasses'])
+        computes = [wf.compute([image_.ndarray, image_.properties, cdl_.ndarray, cdl_iscrop.ndarray],
+                               tile) for tile in tiles_to_run]
+        for k, data in enumerate(computes):
+            img_data, img_info, cdl_data, cdl_mask = data
+            batch_x[k] = get_monthly_arrays(img_data, img_info)
+            batch_y[k] = mask_crop_layer(cdl_data, self.model_params['nclasses'])
         return batch_x, batch_y
 
     def train_model(self, batch_size, epochs):
