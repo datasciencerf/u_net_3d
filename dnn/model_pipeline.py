@@ -39,7 +39,7 @@ class UNetPipeline(object):
         img_width = self.model_params['img_width']
         bands = self.model_params['bands']
         batch_x = np.zeros((batch_size, time_steps, img_height, img_width, bands))
-        batch_y = np.zeros((batch_size, img_height, img_width))
+        batch_y = np.zeros((batch_size, img_height, img_width, self.model_params['nclasses']))
         tiles_to_run = self.tiles[batch_ix]
         jobs = [wf.compute([image_.ndarray, image_.properties, cdl_.ndarray, cdl_iscrop.ndarray],
                            tile, block=False) for tile in tiles_to_run]
