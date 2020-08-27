@@ -15,7 +15,7 @@ def get_monthly_arrays(data: np.ndarray, info: list, time_steps=12) -> np.ndarra
     for k, dr in enumerate(sorted([(x, y) for x in years for y in months])):
         if date_ranges[dr]:
             avg_array[k] = data[date_ranges[dr][0]:date_ranges[dr][-1] + 1].mean(axis=0)
-    return avg_array.transpose((0, 3, 1, 2))
+    return avg_array.transpose((0, 2, 3, 1))
 
 
 def mask_crop_layer(cdl_img: np.ndarray, cdl_mask: np.ndarray) -> np.ndarray:
