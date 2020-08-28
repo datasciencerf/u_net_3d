@@ -67,13 +67,18 @@ class UNetPipeline(object):
                 self.random_state.shuffle(ix_base)
                 for k in range(0, len(ix_base), batch_size):
                     train_x, train_y = self.data_loader(ix_base[k:k + batch_size], year)
-                    print(f"Year {year}")
-                    print(f"Epoch {e + 1} / {epochs}: ")
-                    print(f"Batch {(k // batch_size) + 1} out of {int(np.ceil(len(ix_base) / batch_size))}")
-                    print("#" * 32)
-                    self.model.fit(x=train_x, y=train_y, batch_size=batch_size,
-                                   epochs=1, verbose=1,
-                                   validation_data=val_data)
+                    if k % 100 == 0:
+                        print(f"Year {year}")
+                        print(f"Epoch {e + 1} / {epochs}: ")
+                        print(f"Batch {(k // batch_size) + 1} out of {int(np.ceil(len(ix_base) / batch_size))}")
+                        print("#" * 32)
+                        self.model.fit(x=train_x, y=train_y, batch_size=batch_size,
+                                       epochs=1, verbose=1,
+                                       validation_data=val_data)
+                    else:
+                        self.model.fit(x=train_x, y=train_y, batch_size=batch_size,
+                                       epochs=1, verbose=0,
+                                       validation_data=val_data)
 
     def save_model(self, save_fp):
         self.model.save(save_fp)
