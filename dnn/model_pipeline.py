@@ -56,7 +56,7 @@ class UNetPipeline(object):
             batch_y[k] = mask_crop_layer(cdl_data, self.model_params['nclasses'])
         return batch_x, batch_y
 
-    def train_model(self, batch_size, epochs, test_set=False):
+    def train_model(self, batch_size, epochs, print_every=10, test_set=False):
         val_data = None
         for year in self.date_ranges:
             if test_set:
@@ -65,9 +65,10 @@ class UNetPipeline(object):
             ix_base = np.array(self.train_ix)
             for e in range(epochs):
                 self.random_state.shuffle(ix_base)
+                print('Starting Training ...')
                 for k in range(0, len(ix_base), batch_size):
                     train_x, train_y = self.data_loader(ix_base[k:k + batch_size], year)
-                    if (k // batch_size) % 100 == 0:
+                    if (k // batch_size) % print_every == 0:
                         print(f"Year {year}")
                         print(f"Epoch {e + 1} / {epochs}: ")
                         print(f"Batch {(k // batch_size) + 1} out of {int(np.ceil(len(ix_base) / batch_size))}")
