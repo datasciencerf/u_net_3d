@@ -67,7 +67,7 @@ class UNetPipeline(object):
                 self.random_state.shuffle(ix_base)
                 for k in range(0, len(ix_base), batch_size):
                     train_x, train_y = self.data_loader(ix_base[k:k + batch_size], year)
-                    if k % 100 == 0:
+                    if (k // batch_size) % 100 == 0:
                         print(f"Year {year}")
                         print(f"Epoch {e + 1} / {epochs}: ")
                         print(f"Batch {(k // batch_size) + 1} out of {int(np.ceil(len(ix_base) / batch_size))}")
