@@ -6,17 +6,23 @@ from tensorflow.keras.optimizers import Adam
 
 
 def conv_block_3d(tensor, nfilters, size=3, padding='same', initializer="he_normal"):
-    x = Conv3D(filters=nfilters, kernel_size=(size, size, size), padding=padding)(tensor)
+    x = Conv3D(filters=nfilters,
+               kernel_size=(size, size, size),
+               padding=padding,
+               activation='elu'
+               )(tensor)
     x = BatchNormalization()(x)
-    x = Activation("elu")(x)
     x = Conv3D(filters=nfilters, kernel_size=(size, size, size), padding=padding)(x)
     x = BatchNormalization()(x)
-    x = Activation("elu")(x)
     return x
 
 
 def deconv_block_3d(tensor, residual, nfilters, size=3, padding='same', strides=(2, 2, 2)):
-    y = Conv3DTranspose(nfilters, kernel_size=(size, size, size), strides=strides, padding=padding)(tensor)
+    y = Conv3DTranspose(nfilters,
+                        kernel_size=(size, size, size),
+                        strides=strides,
+                        padding=padding,
+                        )(tensor)
     y = concatenate([y, residual], axis=4)
     y = conv_block_3d(y, nfilters)
     return y
@@ -60,12 +66,15 @@ def u_net_3d(img_height: int, img_width: int, bands: int,
     deconv7 = deconv_block_3d(deconv6, residual=conv2, nfilters=filters * 4)
     deconv7 = Dropout(0.5)(deconv7)
     # Post Conv/Deconv Processing Block
-    conv6 = Conv3D(filters=nclasses, kernel_size=(time_steps, 1, 1), padding='valid')(deconv7)
+    conv6 = Conv3D(filters=nclasses,
+                   kernel_size=(time_steps, 1, 1),
+                   padding='valid',
+                   activation='elu'
+                   )(deconv7)
     conv6 = BatchNormalization()(conv6)
     shapes = conv6.get_shape()
-    conv6 = Reshape((shapes[2] * shapes[3], shapes[4]))(conv6)
+    output = Reshape((shapes[2] * shapes[3], shapes[4]))(conv6)
     # output = Flatten()(conv6)
-    output = Activation("elu")(conv6)
     model = Model(inputs=input_layer, outputs=output, name='Unet')
     if class_weights is not None:
         loss = weighted_categorical_crossentropy(class_weights)

@@ -5,7 +5,7 @@ from descartes.workflow import wf
 import tensorflow as tf
 from tqdm import tqdm
 from descartes.workflow import as_completed
-from dnn import u_net_3d
+from dnn import u_net_3d, weighted_categorical_crossentropy
 
 
 class UNetPipeline(object):
@@ -104,4 +104,7 @@ class UNetPipeline(object):
         self.model.save(save_fp)
 
     def load_model(self, model_fp):
-        self.model = tf.keras.models.load_model(model_fp)
+        self.model = tf.keras.models.load_model(model_fp,
+                                                custom_objects={
+                                                    'wcce': weighted_categorical_crossentropy
+                                                })

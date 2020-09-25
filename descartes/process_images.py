@@ -25,7 +25,7 @@ def get_monthly_arrays(data: np.ndarray, info: list, time_steps=12) -> np.ndarra
 def mask_crop_layer(cdl: np.ndarray, nclasses: int) -> np.ndarray:
     cdl = np.array(cdl[0, 0])
     y = np.zeros((cdl.shape[0], cdl.shape[1], nclasses), dtype='int32')
-    y[:, :, 0] = np.asanyarray(~np.isin(cdl[0, 0], list(crops_enc)), dtype='int32')
+    y[:, :, 0] = np.asanyarray(~np.isin(cdl, list(crops_enc)), dtype='int32')
     for k in crops_dec:
         y[:, :, k] = np.asanyarray(cdl == crops_dec[k], dtype='int32')
     return y
