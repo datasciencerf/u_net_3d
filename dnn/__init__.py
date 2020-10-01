@@ -1,18 +1,28 @@
 from tensorflow.keras.layers import Conv3D, Conv3DTranspose, BatchNormalization, Dropout
 from tensorflow.keras.layers import Input, concatenate, MaxPooling3D, Activation, Reshape, Flatten
-from tensorflow.keras import Model
+from tensorflow.keras import Model, regularizers
 from tensorflow.keras import backend as K
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam, RMSprop
 
 
 def conv_block_3d(tensor, nfilters, size=3, padding='same', initializer="he_normal"):
     x = Conv3D(filters=nfilters,
                kernel_size=(size, size, size),
                padding=padding,
-               activation='elu'
+               activation='elu',
+               kernel_regularizer=regularizers.l2(7e-5),
+               bias_regularizer=regularizers.l2(7e-5),
+               activity_regularizer=regularizers.l2(1e-5)
                )(tensor)
     x = BatchNormalization()(x)
-    x = Conv3D(filters=nfilters, kernel_size=(size, size, size), padding=padding)(x)
+    x = Conv3D(filters=nfilters,
+               kernel_size=(size, size, size),
+               padding=padding,
+               activation='elu',
+               kernel_regularizer=regularizers.l2(7e-5),
+               bias_regularizer=regularizers.l2(7e-5),
+               activity_regularizer=regularizers.l2(1e-5)
+               )(x)
     x = BatchNormalization()(x)
     return x
 
@@ -22,6 +32,9 @@ def deconv_block_3d(tensor, residual, nfilters, size=3, padding='same', strides=
                         kernel_size=(size, size, size),
                         strides=strides,
                         padding=padding,
+                        kernel_regularizer=regularizers.l2(7e-5),
+                        bias_regularizer=regularizers.l2(7e-5),
+                        activity_regularizer=regularizers.l2(1e-5)
                         )(tensor)
     y = concatenate([y, residual], axis=4)
     y = conv_block_3d(y, nfilters)
@@ -44,15 +57,20 @@ def u_net_3d(img_height: int, img_width: int, bands: int,
              class_weights=None, filters=16) -> Model:
     input_layer = Input(shape=(time_steps, img_height, img_width, bands), name='image_input')
     # First Conv Block
-    conv1 = conv_block_3d(input_layer, nfilters=filters)
+    input_norm = BatchNormalization()(input_layer)
+    conv1 = conv_block_3d(input_norm, nfilters=filters)
+    conv1 = Dropout(0.2)(conv1)
     conv1 = BatchNormalization()(conv1)
     conv2 = conv_block_3d(conv1, nfilters=filters * 2)
+    conv2 = Dropout(0.2)(conv2)
     conv2 = BatchNormalization()(conv2)
     conv2_out = MaxPooling3D(pool_size=(2, 2, 2), padding='same')(conv2)
     # Second Conv Block
     conv3 = conv_block_3d(conv2_out, nfilters=filters * 4)
+    conv3 = Dropout(0.2)(conv3)
     conv3 = BatchNormalization()(conv3)
     conv4 = conv_block_3d(conv3, nfilters=filters * 8)
+    conv4 = Dropout(0.2)(conv4)
     conv4 = BatchNormalization()(conv4)
     conv4_out = MaxPooling3D(pool_size=(2, 2, 2), padding='same')(conv4)
     # Third Conv Block
@@ -69,7 +87,10 @@ def u_net_3d(img_height: int, img_width: int, bands: int,
     conv6 = Conv3D(filters=nclasses,
                    kernel_size=(time_steps, 1, 1),
                    padding='valid',
-                   activation='elu'
+                   activation='elu',
+                   kernel_regularizer=regularizers.l2(1e-5),
+                   bias_regularizer=regularizers.l2(1e-5),
+                   activity_regularizer=regularizers.l2(1e-5)
                    )(deconv7)
     conv6 = BatchNormalization()(conv6)
     shapes = conv6.get_shape()
@@ -78,10 +99,11 @@ def u_net_3d(img_height: int, img_width: int, bands: int,
     model = Model(inputs=input_layer, outputs=output, name='Unet')
     if class_weights is not None:
         loss = weighted_categorical_crossentropy(class_weights)
-        model.compile(optimizer=Adam(lr=learning_rate),
+        model.compile(optimizer=Adam(lr=learning_rate, clipvalue=5),
                       loss=loss, metrics=['accuracy'])
     else:
-        model.compile(optimizer=Adam(lr=learning_rate),
-                      loss='categorical_crossentropy', metrics=['accuracy'])
+        loss = weighted_categorical_crossentropy(class_weights)
+        model.compile(optimizer=Adam(lr=learning_rate, clipvalue=5),
+                      loss=loss, metrics=['accuracy'])
     print(model.summary())
     return model

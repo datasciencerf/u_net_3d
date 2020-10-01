@@ -66,6 +66,7 @@ class UNetPipeline(object):
                         print(e)'''
             # batch_x[k] = get_monthly_arrays(img_data, img_info)
             # batch_y[k] = mask_crop_layer(cdl_data, self.model_params['nclasses'])
+            assert not np.any(np.isnan(batch_x))
             return batch_x, batch_y.reshape((batch_size, img_height * img_width, self.model_params['nclasses']))
         except Exception as e:
             print(f"Exception hit, Skipping batch")
