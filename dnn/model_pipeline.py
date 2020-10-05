@@ -3,6 +3,7 @@ from descartes import get_masked_daily_product, ndvi, get_cdl, isin, crops_list
 from descartes.process_images import get_monthly_arrays, mask_crop_layer
 from descartes.workflow import wf
 import tensorflow as tf
+from func_timeout import func_set_timeout, FunctionTimedOut
 from tqdm import tqdm
 from descartes.workflow import as_completed
 from dnn import u_net_3d, weighted_categorical_crossentropy
@@ -30,6 +31,7 @@ class UNetPipeline(object):
             '2019': ['2019-01-01', '2020-01-01']
         }
 
+    @func_set_timeout(30 * 60)
     def data_loader(self, batch_ix, year):
         batch_size = len(batch_ix)
         start_date, end_date = self.date_ranges[year]
@@ -83,7 +85,11 @@ class UNetPipeline(object):
                 ix_base = np.array(self.train_ix)
                 self.random_state.shuffle(ix_base)
                 for k in range(0, len(ix_base), batch_size):
-                    train_d = self.data_loader(ix_base[k:k + batch_size], year)
+                    try:
+                        train_d = self.data_loader(ix_base[k:k + batch_size], year)
+                    except FunctionTimedOut:
+                        train_d = None
+                        print(f"Batch Timed Out, Skipping!")
                     # print(train_y.shape)
                     # print(train_y[0].max())
                     if train_d is not None:
